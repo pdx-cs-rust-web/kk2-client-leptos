@@ -24,14 +24,13 @@ where
             }
         });
 
-        gloo_net::http::Request::get(path)
+        let joke = gloo_net::http::Request::get(path)
             .abort_signal(abort_signal.as_ref())
             .send()
             .await
-            //.map_err(|e| log::error!("{e}"))
             .ok()?
             .json()
             .await
-            .ok()
+            .ok()?;
     })
 }
