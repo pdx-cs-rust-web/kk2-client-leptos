@@ -1,14 +1,21 @@
 // This code originally borrowed from the leptos crate
 // examples, where variants appear throughout.
 
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Serialize, Deserialize};
+use std::collections::HashSet;
 
-pub fn fetch_api<T>(
+#[derive(Serialize, Deserialize)]
+pub struct Joke {
+    pub id: String,
+    pub whos_there: String,
+    pub answer_who: String,
+    pub tags: HashSet<String>,
+    pub source: String,
+}
+
+pub fn fetch(
     path: &str,
-) -> impl std::future::Future<Output = Option<T>> + Send + '_
-where
-    T: Serialize + DeserializeOwned,
-{
+) -> impl std::future::Future<Output = Joke> + Send + '_ {
     use leptos::prelude::on_cleanup;
     use send_wrapper::SendWrapper;
 
@@ -24,13 +31,14 @@ where
             }
         });
 
-        let joke = gloo_net::http::Request::get(path)
+        let path = format!("http://localhost:3000/api/v1/{path}");
+        gloo_net::http::Request::get(&path)
             .abort_signal(abort_signal.as_ref())
             .send()
             .await
-            .ok()?
+            .unwrap()
             .json()
             .await
-            .ok()?;
+            .unwrap()
     })
 }
