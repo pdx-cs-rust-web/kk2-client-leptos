@@ -23,10 +23,12 @@ fn fetch_joke() -> impl IntoView {
                         <span class="teller">{joke.answer_who.clone()}</span>
                     </div>
                     <span class="annotation">
-                        {format!("[id: {}", &joke.id)}
-                        {format!("; tags: {}", &format_tags(&joke.tags))}
-                        {format!("; source: {}", &joke.source)}
-                        {"]"}
+                        {format!(
+                            "[id: {}; tags: {}; source: {}]",
+                            &joke.id,
+                            &format_tags(&joke.tags),
+                            &joke.source,
+                        )}
                     </span>
                 })
             })}
