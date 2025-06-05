@@ -15,11 +15,14 @@ pub struct Joke {
 }
 
 
-pub async fn fetch(endpoint: &str) -> Result<Joke, Error> {
-    let result = reqwasm::http::Request::get(&format!(
+pub async fn fetch(endpoint: String) -> Result<Joke, Error> {
+    use reqwasm::http::Request;
+
+    let ep = format!(
         "http://localhost:3000/api/v1/{}",
         endpoint,
-    ))
+    );
+    let result = Request::get(&ep)
         .send()
         .await?
         // convert it to JSON
