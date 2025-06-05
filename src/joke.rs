@@ -15,7 +15,7 @@ pub struct Joke {
 
 pub fn fetch(
     path: &str,
-) -> impl std::future::Future<Output = Joke> + Send + '_ {
+) -> impl std::future::Future<Output = Result<Joke, Box<dyn std::error::Error>>> + Send + '_ {
     use leptos::prelude::on_cleanup;
     use send_wrapper::SendWrapper;
 
@@ -32,13 +32,12 @@ pub fn fetch(
         });
 
         let path = format!("http://localhost:3000/api/v1/{path}");
-        gloo_net::http::Request::get(&path)
+        let json = gloo_net::http::Request::get(&path)
             .abort_signal(abort_signal.as_ref())
             .send()
-            .await
-            .unwrap()
+            .await?
             .json()
-            .await
-            .unwrap()
+            .await?;
+        Ok(json)
     })
 }

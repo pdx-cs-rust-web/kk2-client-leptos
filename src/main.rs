@@ -11,27 +11,41 @@ fn format_tags(tags: &HashSet<String>) -> String {
 
 fn fetch_joke() -> impl IntoView {
     let joke = LocalResource::new(move || joke::fetch("random-joke"));
+
+    let fallback = move |errors: ArcRwSignal<Errors>| {
+        view! {
+            <div class="error">
+                <h2>"Error"</h2>
+                <span class="error-message">{errors.into()}</span>
+            </div>
+        }
+    };
+
     view! {
-        <Transition fallback=|| view! { <div>"Loading..."</div> }> {
-            move || Suspend::new( async move {
-                joke.map(|joke| view! {
-                    <div class="joke">
-                        <span class="teller">{"Knock-Knock!"}</span><br/>
-                        <span class="tellee">{"Who's there?"}</span><br/>
-                        <span class="teller">{joke.whos_there.clone()}</span><br/>
-                        <span class="tellee">{format!("{} who?", &joke.whos_there)}</span><br/>
-                        <span class="teller">{joke.answer_who.clone()}</span>
-                    </div>
-                    <span class="annotation">
-                        {format!(
-                            "[id: {}; tags: {}; source: {}]",
-                            &joke.id,
-                            &format_tags(&joke.tags),
-                            &joke.source,
-                        )}
-                    </span>
+        <Transition fallback=|| view! { <div>"Loading..."</div> }>
+            <ErrorBoundary fallback> {
+                move || Suspend::new( async move {
+                    joke.map(|joke| {
+                        view! {
+                            <div class="joke">
+                                <span class="teller">{"Knock-Knock!"}</span><br/>
+                                <span class="tellee">{"Who's there?"}</span><br/>
+                                <span class="teller">{joke.whos_there.clone()}</span><br/>
+                                <span class="tellee">{format!("{} who?", &joke.whos_there)}</span><br/>
+                                <span class="teller">{joke.answer_who.clone()}</span>
+                            </div>
+                            <span class="annotation">
+                                {format!(
+                                    "[id: {}; tags: {}; source: {}]",
+                                    &joke.id,
+                                    &format_tags(&joke.tags),
+                                    &joke.source,
+                                )}
+                            </span>
+                        }
+                    })
                 })
-            })}
+            } </ErrorBoundary>
         </Transition>
     }
 }
