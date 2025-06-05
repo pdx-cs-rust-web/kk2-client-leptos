@@ -3,6 +3,44 @@ mod joke;
 use std::collections::HashSet;
 use leptos::prelude::*;
 
+// Gemini wrote this part initially.
+#[component]
+pub fn EnterInput(set_endpoint: WriteSignal<String>) -> impl IntoView {
+    // Create a signal to store the current input value
+    let (input_text, set_input_text) = signal("".to_string());
+
+    // Define the action to be performed on Enter
+    let handle_enter_action = move |_| {
+        // This closure needs to capture 'input_text' and 'set_submitted_text'
+        // to read the current input and update the submitted text.
+        let current_input = input_text.get(); // Get the current value from the signal
+        if !current_input.trim().is_empty() {
+            set_endpoint.set(format!("joke/{}", current_input));
+        }
+    };
+
+    view! {
+        <div>
+            "Find a joke: " <input
+                type="text"
+                // Bind the input's value to the signal
+                prop:value=input_text
+                // Update the signal when the input changes
+                on:input=move |ev| {
+                    set_input_text.set(event_target_value(&ev));
+                }
+                // Listen for keydown events
+                on:keydown=move |ev: web_sys::KeyboardEvent| {
+                    if ev.key() == "Enter" {
+                        handle_enter_action(ev);
+                    }
+                }
+                placeholder="Joke ID"
+            />
+        </div>
+    }
+}
+
 fn format_tags(tags: &HashSet<String>) -> String {
     let taglist: Vec<&str> = tags.iter().map(String::as_ref).collect();
     taglist.join(", ")
@@ -63,12 +101,7 @@ fn fetch_joke() -> impl IntoView {
                 let ep = "random-joke".to_string();
                 set_endpoint.set(ep)
             }>Tell me another!</button>
-            // XXX here
-            <input foo=move || {
-                let ep = format!("jokes/{}", joke_id.target().value());
-                eprintln!("{}", ep);
-                set_endpoint.set(ep);
-            } />
+            <EnterInput set_endpoint=set_endpoint/>
         </div>
     }
 }
