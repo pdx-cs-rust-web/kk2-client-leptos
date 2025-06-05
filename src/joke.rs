@@ -1,6 +1,7 @@
 // This code originally borrowed from the leptos crate
 // examples, where variants appear throughout.
 
+use leptos::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;
 
@@ -13,31 +14,16 @@ pub struct Joke {
     pub source: String,
 }
 
-pub fn fetch(
-    path: &str,
-) -> impl std::future::Future<Output = Result<Joke, Box<dyn std::error::Error>>> + Send + '_ {
-    use leptos::prelude::on_cleanup;
-    use send_wrapper::SendWrapper;
 
-    SendWrapper::new(async move {
-        let abort_controller =
-            SendWrapper::new(web_sys::AbortController::new().ok());
-        let abort_signal = abort_controller.as_ref().map(|a| a.signal());
-
-        // abort in-flight requests if, e.g., we've navigated away from this page
-        on_cleanup(move || {
-            if let Some(abort_controller) = abort_controller.take() {
-                abort_controller.abort()
-            }
-        });
-
-        let path = format!("http://localhost:3000/api/v1/{path}");
-        let json = gloo_net::http::Request::get(&path)
-            .abort_signal(abort_signal.as_ref())
-            .send()
-            .await?
-            .json()
-            .await?;
-        Ok(json)
-    })
+pub async fn fetch(endpoint: &str) -> Result<Joke, Error> {
+    let result = reqwasm::http::Request::get(&format!(
+        "http://localhost:3000/api/v1/{}",
+        endpoint,
+    ))
+        .send()
+        .await?
+        // convert it to JSON
+        .json()
+        .await?;
+    Ok(result)
 }

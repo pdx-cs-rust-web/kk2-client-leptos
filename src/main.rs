@@ -1,7 +1,6 @@
 mod joke;
 
 use std::collections::HashSet;
-
 use leptos::prelude::*;
 
 fn format_tags(tags: &HashSet<String>) -> String {
@@ -12,40 +11,51 @@ fn format_tags(tags: &HashSet<String>) -> String {
 fn fetch_joke() -> impl IntoView {
     let joke = LocalResource::new(move || joke::fetch("random-joke"));
 
-    let fallback = move |errors: ArcRwSignal<Errors>| {
+    let error_fallback = move |errors: ArcRwSignal<Errors>| {
+        let error_list = move || {
+            errors.with(|errors| {
+                errors
+                    .iter()
+                    .map(|(_, e)| view! { <li>{e.to_string()}</li> })
+                    .collect::<Vec<_>>()
+            })
+        };
+
         view! {
-            <div class="error">
+            <div>
                 <h2>"Error"</h2>
-                <span class="error-message">{errors.into()}</span>
+                <span class="error">{error_list}</span>
             </div>
         }
     };
 
     view! {
         <Transition fallback=|| view! { <div>"Loading..."</div> }>
-            <ErrorBoundary fallback> {
-                move || Suspend::new( async move {
-                    joke.map(|joke| {
+            <ErrorBoundary fallback=error_fallback>
+                {move || Suspend::new( async move {
+                    joke.map(|j| {
+                        // XXX Don't know how to fix this unwrap() yet.
+                        let j = j.as_ref().unwrap();
                         view! {
                             <div class="joke">
                                 <span class="teller">{"Knock-Knock!"}</span><br/>
                                 <span class="tellee">{"Who's there?"}</span><br/>
-                                <span class="teller">{joke.whos_there.clone()}</span><br/>
-                                <span class="tellee">{format!("{} who?", &joke.whos_there)}</span><br/>
-                                <span class="teller">{joke.answer_who.clone()}</span>
+                                <span class="teller">{j.whos_there.clone()}</span><br/>
+                                <span class="tellee">{format!("{} who?", j.whos_there)}</span><br/>
+                                <span class="teller">{j.answer_who.clone()}</span>
                             </div>
                             <span class="annotation">
                                 {format!(
                                     "[id: {}; tags: {}; source: {}]",
-                                    &joke.id,
-                                    &format_tags(&joke.tags),
-                                    &joke.source,
+                                    j.id,
+                                    format_tags(&j.tags),
+                                    j.source,
                                 )}
                             </span>
                         }
                     })
-                })
-            } </ErrorBoundary>
+                })}
+            </ErrorBoundary>
         </Transition>
     }
 }
