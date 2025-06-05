@@ -9,7 +9,8 @@ fn format_tags(tags: &HashSet<String>) -> String {
 }
 
 fn fetch_joke() -> impl IntoView {
-    let joke = LocalResource::new(move || joke::fetch("random-joke"));
+    let (endpoint, set_endpoint) = signal::<&'static str>("random-joke");
+    let joke = LocalResource::new(move || joke::fetch(endpoint.get()));
 
     let error_fallback = move |errors: ArcRwSignal<Errors>| {
         let error_list = move || {
@@ -30,7 +31,7 @@ fn fetch_joke() -> impl IntoView {
     };
 
     view! {
-        <Transition fallback=|| view! { <div>"Loading..."</div> }>
+        <div><Transition fallback=|| view! { <div>"Loading..."</div> }>
             <ErrorBoundary fallback=error_fallback>
                 {move || Suspend::new( async move {
                     joke.map(|j| {
@@ -56,7 +57,10 @@ fn fetch_joke() -> impl IntoView {
                     })
                 })}
             </ErrorBoundary>
-        </Transition>
+        </Transition></div>
+        <div>
+            <button on:click=move |_| set_endpoint.set("random-joke")>Tell me another!</button>
+        </div>
     }
 }
 
