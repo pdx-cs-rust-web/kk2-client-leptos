@@ -16,7 +16,7 @@ pub struct Joke {
 
 
 pub async fn fetch(endpoint: String) -> Result<Joke, Error> {
-    use reqwasm::http::Request;
+    use gloo_net::http::Request;
 
     let ep = format!(
         "http://localhost:3000/api/v1/{}",
@@ -25,7 +25,6 @@ pub async fn fetch(endpoint: String) -> Result<Joke, Error> {
     let result = Request::get(&ep)
         .send()
         .await?
-        // convert it to JSON
         .json()
         .await?;
     Ok(result)
